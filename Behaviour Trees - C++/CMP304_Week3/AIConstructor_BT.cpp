@@ -64,8 +64,14 @@ void AIConstructor_BT::DefineActions()
 
 	// TASK TODO - Add Additional Actions
 
+	auto chaseFunc = [](AIBrainBlackboardBase& bb)->ActionStatus
+		{
+			AIActor_Guard* actor = static_cast<AIActor_Guard*>(bb.GetActorContext());
 
+			return actor->Chase();
+		};
 
+	AddActionByName("ActionChase", chaseFunc);
 
 
 
@@ -74,6 +80,17 @@ void AIConstructor_BT::DefineActions()
 void AIConstructor_BT::DefineConsiderations()
 {
 	// Example Consideration - Can see an enemy?
+	
+	auto cCanHearEnemy = [](AIBrainBlackboardBase& bb) -> bool {
+
+		bool enemyHeard = (bb.GetValueInt("CanHearPlayer") == 1);
+		return(enemyHeard);
+
+		};
+
+	AddConsiderationByName("ConsiderationHearPlayer", cCanHearEnemy);
+
+	
 	auto cCanSeeEnemy = [](AIBrainBlackboardBase& bb) -> bool {
 
 		bool enemySeen = (bb.GetValueInt("CanSeePlayer") == 1);
@@ -85,16 +102,20 @@ void AIConstructor_BT::DefineConsiderations()
 	AddConsiderationByName("ConsiderationSeePlayer", cCanSeeEnemy);
 
 
+	auto canPatrol = [](AIBrainBlackboardBase& bb) -> bool
+		{
+			if (bb.GetValue("Energy") <= 0.f) 
+			{
+				return false;
+			}
+			return true;
+		};
+
+	AddConsiderationByName("ConsiderationPatrol", canPatrol);
 	// TASK TODO - Add Additional Considerations
 
 	auto canRest = [](AIBrainBlackboardBase& bb) ->bool
 		{
-			/*if (bb.GetValue("Energy") == 20) 
-			{
-				bb.EditValue("IsHealing",0);
-				return false;
-			}*/
-
 			if (bb.GetValue("Energy") <=0.f)
 			{
 				bb.GetValue("IsHealing") == 1;
@@ -127,6 +148,9 @@ void AIConstructor_BT::DefineOptions()
 	AddOptionByName("OptionRest", "ActionRest");
 
 	
+	AddOptionConsideration("OptionPatrol", "ConsiderationPatrol");
+	AddOptionConsideration("OptionChase", "ConsiderationSeePlayer");
+	AddOptionConsideration("OptionChase", "ConsiderationHearPlayer");
 
 
 	// - CONTROL NODES - SUB REASONERS - 
@@ -135,6 +159,7 @@ void AIConstructor_BT::DefineOptions()
 	AddControlNodeByName("OptionPatrolSeq", AIReasonerBase::Sequence);
 	AddControlNodeByName("RestCheckDec", AIReasonerBase::Decorator);
 	AddControlNodeByName("OptionRestSeq", AIReasonerBase::Sequence);
+	AddControlNodeByName("OptionChaseSeq", AIReasonerBase::Sequence);
 
 	AddConsiderationToDecorator("RestCheckDec", "ConsiderationRest");
 
@@ -145,7 +170,8 @@ void AIConstructor_BT::DefineOptions()
 	AddOptionsToSubReasoner("OptionRestSeq", "OptionRest");
 	AddOptionsToSubReasoner("OptionPatrolSeq", "OptionGetPatrolPath");
 	AddOptionsToSubReasoner("OptionPatrolSeq", "OptionPatrol");
-
+	AddOptionsToSubReasoner("OptionPatrolSeq", "OptionChaseSeq");
+	AddOptionsToSubReasoner("OptionChaseSeq", "OptionChase");
 
 	//AddOptionsToSubReasoner("Root", "OptionPatrolSeq");
 	//AddOptionsToSubReasoner("OptionPatrolSeq", "OptionGetPatrolPath");
