@@ -96,14 +96,50 @@ ActionStatus BT_SequenceNode::Act()
 			//		Status = RUNNING
 
 			ActionStatus _actionResult = selectedOption->GetOptionAction()->PerformAction(*actorBlackboard);
+			
+			if (_actionResult == ActionStatus::ACTION_SUCCESS) 
+			{
+				//move on
+				//quick short circuit to make sure we are in bounds of the vector. also checking if we are at the last node of the sequence
+				if ((runningOptionIndex - 1 >= 0) && (options[runningOptionIndex - 1] == options[runningOptionIndex])) 
+				{
+					std::cout << "[" << actorBlackboard->GetActorContext()->GetActorID() << "] BT Log: Sequence Node Success - Sequence Completed, only 1 leaf present" << std::endl;
+					SetStatus(ActionStatus::ACTION_SUCCESS);
+
+				}
+				else if(runningOptionIndex < (options.size()-1))
+				{
+					runningOptionIndex++;
+
+				}
+				else if (runningOptionIndex == options.size() - 1) 
+				{
+					std::cout << "[" << actorBlackboard->GetActorContext()->GetActorID() << "] BT Log: Sequence Node Success - Sequence Completed, Reached end of sequence" << std::endl;
+					SetStatus(ActionStatus::ACTION_SUCCESS);
+
+				}
+			
+				
+
+			}
+			else if (_actionResult == ActionStatus::ACTION_FAILURE) 
+			{
+				//report failure to the parent
+				std::cout << "[" << actorBlackboard->GetActorContext()->GetActorID() << "] BT Log: Sequence Node Failed - Failure" << std::endl;
+				SetStatus(ActionStatus::ACTION_FAILURE);
+			}
+			else if (_actionResult == ActionStatus::ACTION_RUNNING) 
+			{
+				std::cout << "[" << actorBlackboard->GetActorContext()->GetActorID() << "] BT Log: Sequence Node Still Running - Running" << std::endl;
+				SetStatus(ActionStatus::ACTION_RUNNING);
+
+			}
+
+
 
 
 		}
-	
-
 	}
-
-
 	// return GetStatus
 	return GetStatus();
 }

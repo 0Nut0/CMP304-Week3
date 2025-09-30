@@ -53,7 +53,13 @@ void AIConstructor_BT::DefineActions()
 	AddActionByName("ActionGetPatrolPath", getPatrolPathFunction);
 
 
+	auto restFunc = [](AIBrainBlackboardBase& bb) -> ActionStatus
+		{
+			AIActor_Guard* actor = static_cast<AIActor_Guard*>(bb.GetActorContext());
+			return actor->Rest();
+		};
 
+	AddActionByName("ActionRest", restFunc);
 
 	// TASK TODO - Add Additional Actions
 
@@ -80,6 +86,14 @@ void AIConstructor_BT::DefineConsiderations()
 
 	// TASK TODO - Add Additional Considerations
 
+	auto canRest = [](AIBrainBlackboardBase& bb) ->bool
+		{
+
+			float energy = bb.GetValue("Energy");
+			return energy <= 0;
+		};
+
+	AddConsiderationByName("ConsiderationRest", canRest);
 
 }
 
@@ -100,7 +114,7 @@ void AIConstructor_BT::DefineOptions()
 
 	AddOptionByName("OptionGetPatrolPath", "ActionGetPatrolPath");
 	AddOptionByName("OptionPatrol", "ActionPatrol");
-
+	AddOptionByName("OptionRest", "ActionRest");
 
 	
 
@@ -108,8 +122,24 @@ void AIConstructor_BT::DefineOptions()
 	// - CONTROL NODES - SUB REASONERS - 
 	// Add any Control Nodes using AddControlNodeByName()
 	// You do not need to create the Root, that node is already created (called "Root")
-
 	AddControlNodeByName("OptionPatrolSeq", AIReasonerBase::Sequence);
+	AddControlNodeByName("RestCheckDec", AIReasonerBase::Decorator);
+	AddControlNodeByName("OptionRestSeq", AIReasonerBase::Sequence);
+
+	AddConsiderationToDecorator("ConsiderationRest","RestCheckDec");
+
+
+	AddOptionsToSubReasoner("Root", "OptionRestSeq");
+	AddOptionsToSubReasoner("Root", "OptionPatrolSeq");
+	AddOptionsToSubReasoner("OptionRestSeq", "RestCheckDec");
+	AddOptionsToSubReasoner("RestCheckDec", "OptionRest");
+	AddOptionsToSubReasoner("OptionPatrolSeq", "OptionGetPatrolPath");
+	AddOptionsToSubReasoner("OptionPatrolSeq", "OptionPatrol");
+
+
+
+
+
 
 
 
