@@ -56,6 +56,7 @@ void AIConstructor_BT::DefineActions()
 	auto restFunc = [](AIBrainBlackboardBase& bb) -> ActionStatus
 		{
 			AIActor_Guard* actor = static_cast<AIActor_Guard*>(bb.GetActorContext());
+			
 			return actor->Rest();
 		};
 
@@ -88,9 +89,18 @@ void AIConstructor_BT::DefineConsiderations()
 
 	auto canRest = [](AIBrainBlackboardBase& bb) ->bool
 		{
+			/*if (bb.GetValue("Energy") == 20) 
+			{
+				bb.EditValue("IsHealing",0);
+				return false;
+			}*/
 
-			float energy = bb.GetValue("Energy");
-			return energy <= 0;
+			if (bb.GetValue("Energy") <=0.f)
+			{
+				bb.GetValue("IsHealing") == 1;
+				return true;
+			}
+			return false;
 		};
 
 	AddConsiderationByName("ConsiderationRest", canRest);
@@ -126,16 +136,20 @@ void AIConstructor_BT::DefineOptions()
 	AddControlNodeByName("RestCheckDec", AIReasonerBase::Decorator);
 	AddControlNodeByName("OptionRestSeq", AIReasonerBase::Sequence);
 
-	AddConsiderationToDecorator("ConsiderationRest","RestCheckDec");
+	AddConsiderationToDecorator("RestCheckDec", "ConsiderationRest");
 
 
 	AddOptionsToSubReasoner("Root", "OptionRestSeq");
 	AddOptionsToSubReasoner("Root", "OptionPatrolSeq");
 	AddOptionsToSubReasoner("OptionRestSeq", "RestCheckDec");
-	AddOptionsToSubReasoner("RestCheckDec", "OptionRest");
+	AddOptionsToSubReasoner("OptionRestSeq", "OptionRest");
 	AddOptionsToSubReasoner("OptionPatrolSeq", "OptionGetPatrolPath");
 	AddOptionsToSubReasoner("OptionPatrolSeq", "OptionPatrol");
 
+
+	//AddOptionsToSubReasoner("Root", "OptionPatrolSeq");
+	//AddOptionsToSubReasoner("OptionPatrolSeq", "OptionGetPatrolPath");
+	//AddOptionsToSubReasoner("OptionPatrolSeq", "OptionPatrol");
 
 
 
